@@ -1,0 +1,18 @@
+[project]
+name = "stress-detection"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "metaflow>=2.15.15",
+    "omegaconf>=2.3.0",
+    "polars>=1.30.0",
+    "ruff>=0.11.13",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/stress_detection"]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
