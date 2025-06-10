@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "loguru>=0.7.3",
     "metaflow>=2.15.15",
     "omegaconf>=2.3.0",
     "polars>=1.30.0",
