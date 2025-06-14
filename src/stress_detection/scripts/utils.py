@@ -6,7 +6,7 @@ from supabase import create_client
 from tqdm import tqdm
 import os
 
-def load_config(pipeline: str):
+def load_config(pipeline: str) -> DictConfig:
     mappings = {"feature": "feature_config.yaml", "training": "training_config.yaml", "inference": "inference_config.yaml"}
     return OmegaConf.load(f"src/stress_detection/conf/{mappings[pipeline]}")
 

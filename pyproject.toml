@@ -9,7 +9,10 @@ dependencies = [
     "metaflow>=2.15.15",
     "omegaconf>=2.3.0",
     "polars>=1.30.0",
+    "python-dotenv>=1.1.0",
     "ruff>=0.11.13",
+    "supabase>=2.15.2",
+    "tqdm>=4.67.1",
 ]
 
 [tool.hatch.build.targets.wheel]
