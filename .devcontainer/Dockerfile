@@ -1,37 +1,11 @@
-FROM python:3.10-slim-bookworm
+# .devcontainer/Dockerfile
+FROM mcr.microsoft.com/devcontainers/python:1-3.10-bookworm
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+# Enable devcontainer features
+LABEL dev.containers.featureSetVersion=1
 
-# Install uv
-RUN pip install uv
+# Set working directory
+WORKDIR /workspace
 
-# Install development tools
-RUN pip install ruff black mypy
-
-# Create a non-root user
-RUN useradd -m -s /bin/bash devuser
-USER devuser
-WORKDIR /home/devuser/code
-
-# Copy project files
-COPY --chown=devuser:devuser . .
-
-# Create virtual environment and install dependencies
-RUN uv venv .venv && \
-    uv pip install -e ".[dev]" --python .venv/bin/python
-
-# Add .venv to PATH and create activation alias
-RUN echo 'export PATH="/home/devuser/code/.venv/bin:$PATH"' >> ~/.bashrc && \
-    echo 'alias activate="source /home/devuser/code/.venv/bin/activate"' >> ~/.bashrc
-
-# Set environment variables
-ENV PATH="/home/devuser/code/.venv/bin:$PATH"
-ENV VIRTUAL_ENV="/home/devuser/code/.venv"
-
-# Default command
-CMD ["/bin/bash"]
+# Copy your code in (this happens before postCreateCommand runs)
+COPY . /workspace
