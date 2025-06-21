@@ -6,11 +6,12 @@ class fe_orchestrator:
 
     def execute(self):
         raw_data = from_supabase(self.configs)
-        train, test = split_data(self.configs)
+        train, test = split_data(self.configs, raw_data)
         preprocessed_train, preprocessed_test = preprocess_data(self.configs, train, test)
         to_feast(self.configs, preprocessed_train, preprocessed_test)
 
 
 if __name__ == "__main__":
-    orchestrator = fe_orchestrator(feature_configs={})
+    from stress_detection.scripts.utils import load_config
+    orchestrator = fe_orchestrator(feature_configs=load_config("feature"))
     orchestrator.execute()
