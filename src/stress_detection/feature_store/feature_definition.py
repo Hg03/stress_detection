@@ -1,6 +1,6 @@
-from datetime import timedelta
 from feast import Entity, Field, FeatureView, FileSource, ValueType
-from feast.types import Int64, Float32, String, Float64
+from feast.types import Int64, String, Float64
+from datetime import timedelta
 import ibis
 
 
