@@ -1,6 +1,7 @@
 from sklearn.pipeline import Pipeline
 from supabase import create_client
 from dotenv import load_dotenv
+from feast import FeatureStore
 from tqdm import tqdm
 import ibis_ml as ml
 import ibis
@@ -36,7 +37,6 @@ def from_supabase(configs: dict) -> ibis.table:
     raw_data = raw_data.filter(raw_data[configs.data_loading.columns.target].notnull())
     return raw_data
 
-
 def split_data(configs: dict, raw_data: ibis.table) -> tuple[ibis.table, ibis.table]:
     train, test = ml.train_test_split(raw_data, test_size=configs.preprocess_data.split_ratio, unique_key=configs.data_loading.columns.unique_key, random_seed=0)
     return train, test
@@ -62,4 +62,11 @@ def preprocess_data(configs: dict, train: ibis.table, test: ibis.table) -> tuple
     return ibis.memtable(pipe.fit_transform(train)), ibis.memtable(pipe.transform(test))
 
 def to_feast(configs: dict, preprocessed_train: ibis.table, preprocessed_test: ibis.table) -> None:
-    print("we are here")
+    # Add the column to your Ibis tables
+    preprocessed_train = preprocessed_train.mutate(event_timestamp=ibis.now())
+    preprocessed_test = preprocessed_test.mutate(event_timestamp=ibis.now())
+    preprocessed_train.execute().to_parquet("src/stress_detection/feature_store/data/training_data.parquet")
+    preprocessed_test.execute().to_parquet("src/stress_detection/feature_store/data/testing_data.parquet")
+    store = FeatureStore(repo_path="src/stress_detection/feature_store")
+    from stress_detection.feature_store.feature_definition import employee_training_fv, employee_testing_fv
+    store.apply([employee_training_fv, employee_testing_fv])
