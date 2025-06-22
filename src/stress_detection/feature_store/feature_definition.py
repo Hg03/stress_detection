@@ -1,21 +1,24 @@
+from stress_detection.scripts.utils import load_config
 from feast import Entity, Field, FeatureView, FileSource, ValueType
 from feast.types import Int64, String, Float64
 from datetime import timedelta
 import ibis
+import os
 
 
 def create_schemas():
-    data = ibis.read_parquet("src/stress_detection/feature_store/data/training_data.parquet")
-    data = data.drop("event_timestamp", "employee_id")
+    configs = load_config("feature")
+    data = ibis.read_parquet(os.path.join(configs.data_loading.paths.feature_store, "data/training_data.parquet"))
+    data = data.drop("event_timestamp")
     schema = data.schema()
     list_of_dtypes = {ibis.expr.datatypes.core.float64: Float64, ibis.expr.datatypes.core.string: String, ibis.expr.datatypes.core.int8: Int64, ibis.expr.datatypes.core.int64: Int64}
     return [Field(name=k, dtype=list_of_dtypes[v]) for k, v in schema.items()]
 
 training_data_source = FileSource(
-    path="src/stress_detection/feature_store/data/training_data.parquet", 
+    path="data/training_data.parquet", 
     event_timestamp_column="event_timestamp")
 testing_data_source = FileSource(
-    path="src/stress_detection/feature_store/data/testing_data.parquet", 
+    path="data/testing_data.parquet", 
     event_timestamp_column="event_timestamp")
 
 employee = Entity(

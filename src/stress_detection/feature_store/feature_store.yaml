@@ -3,6 +3,6 @@ registry: data/registry.db
 provider: local
 online_store:
   type: redis
-  connection_string: "redisIP:6379"
+  connection_string: "172.18.0.2:6379"
 offline_store:
   type: file

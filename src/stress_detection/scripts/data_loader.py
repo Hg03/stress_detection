@@ -2,6 +2,7 @@ from sklearn.pipeline import Pipeline
 from supabase import create_client
 from dotenv import load_dotenv
 from feast import FeatureStore
+from datetime import datetime
 from tqdm import tqdm
 import ibis_ml as ml
 import ibis
@@ -59,8 +60,9 @@ def to_feast(configs: dict, preprocessed_train: ibis.table, preprocessed_test: i
     # Add the column to your Ibis tables
     preprocessed_train = preprocessed_train.mutate(event_timestamp=ibis.now())
     preprocessed_test = preprocessed_test.mutate(event_timestamp=ibis.now())
-    preprocessed_train.execute().to_parquet("src/stress_detection/feature_store/data/training_data.parquet")
-    preprocessed_test.execute().to_parquet("src/stress_detection/feature_store/data/testing_data.parquet")
-    store = FeatureStore(repo_path="src/stress_detection/feature_store")
-    from stress_detection.feature_store.feature_definition import employee_training_fv, employee_testing_fv
-    store.apply([employee_training_fv, employee_testing_fv])
+    preprocessed_train.execute().to_parquet(os.path.join(configs.data_loading.paths.feature_store, "data/training_data.parquet"))
+    preprocessed_test.execute().to_parquet(os.path.join(configs.data_loading.paths.feature_store, "data/testing_data.parquet"))
+    store = FeatureStore(repo_path=configs.data_loading.paths.feature_store)
+    from stress_detection.feature_store.feature_definition import employee, employee_training_fv, employee_testing_fv
+    store.apply([employee, employee_training_fv, employee_testing_fv])
+    store.materialize_incremental(end_date=datetime.utcnow())

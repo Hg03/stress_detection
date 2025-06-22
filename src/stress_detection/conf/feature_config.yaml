@@ -2,6 +2,8 @@ data_loading:
   batch_size: 1000
   offset: 0
   raw_data_table_name: "raw data"
+  paths:
+    feature_store: "src/stress_detection/feature_store"
   columns:
     unique_key: "employee_id"
     to_drop:
