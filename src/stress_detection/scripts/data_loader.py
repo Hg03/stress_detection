@@ -1,10 +1,8 @@
-from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder
-from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
-import ibis_ml as ml
 from supabase import create_client
 from dotenv import load_dotenv
 from tqdm import tqdm
+import ibis_ml as ml
 import ibis
 import os
 
@@ -44,10 +42,23 @@ def split_data(configs: dict, raw_data: ibis.table) -> tuple[ibis.table, ibis.ta
     return train, test
 
 def preprocess_data(configs: dict, train: ibis.table, test: ibis.table) -> tuple[ibis.table, ibis.table]:
-    imputer = ml.ImputeMean(ml.numeric())
-    encoder = ml.OrdinalEncode(ml.string())
-    recipe = ml.Recipe(imputer, encoder)
-    pipe = Pipeline([('preprocessor', recipe)]).set_output(transform="pandas")
+    num_imputer = ml.ImputeMean(ml.numeric())
+    cat_imputer = ml.ImputeMode(ml.string())
+
+    onehot_cols = configs.preprocess_data.columns.get("nominal", [])
+    ordinal_cols = configs.preprocess_data.columns.get("ordinal", [])
+    
+    encoder_steps = []
+    if onehot_cols:
+        encoder_steps.append(ml.OneHotEncode(onehot_cols))
+    if ordinal_cols:
+        encoder_steps.append(ml.OrdinalEncode(ordinal_cols))
+
+    recipe = ml.Recipe(num_imputer, cat_imputer, *encoder_steps)
+
+    pipe = Pipeline([
+        ('preprocessor', recipe)
+    ]).set_output(transform="pandas")
     return ibis.memtable(pipe.fit_transform(train)), ibis.memtable(pipe.transform(test))
 
 def to_feast(configs: dict, preprocessed_train: ibis.table, preprocessed_test: ibis.table) -> None:

@@ -9,3 +9,10 @@ data_loading:
     target: "stress_level"
 preprocess_data:
   split_ratio: 0.3 # test size
+  columns:
+    ordinal:
+    - "work_life_balance"
+    - "lives_with_family"
+    nominal:
+    - "working_state"
+    - "work_from"
