@@ -7,12 +7,6 @@ import ibis_ml as ml
 import ibis
 import os
 
-schema = {
-    'id': 'int64',
-    'name': 'string',
-    'created_at': 'timestamp'
-}
-mock_data = ibis.table(schema, name='mock_data')
 
 def from_supabase(configs: dict) -> ibis.table:
     load_dotenv()
