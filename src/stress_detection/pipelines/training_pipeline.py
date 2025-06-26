@@ -8,3 +8,8 @@ class train_orchestrator:
         preprocessed_train, preprocessed_test = from_feast(self.configs)
         model = tune_and_train(self.configs, preprocessed_train, preprocessed_test)
         scores = evaluate_model(self.configs, model, preprocessed_train, preprocessed_test)
+
+if __name__ == "__main__":
+    from stress_detection.scripts.utils import load_config
+    orchestrator = train_orchestrator(training_configs=load_config("training"))
+    orchestrator.execute()
