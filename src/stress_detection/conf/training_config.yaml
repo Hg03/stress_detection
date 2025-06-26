@@ -1,4 +1,6 @@
 training:
+  paths:
+    feature_store: "src/stress_detection/feature_store"
   model:
   - "random forest"
   - "svm"
