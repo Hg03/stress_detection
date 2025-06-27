@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  dev:
+    build: .
+    container_name: python-dev
+    volumes:
+      - .:/home/devuser/code
+      - /home/devuser/code/.venv  # Anonymous volume for venv
+    ports:
+      - "8000:8000"  # Add any ports your app needs
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URL=redis://redis:6379
+    stdin_open: true
+    tty: true
+
+  redis:
+    image: redis/redis-stack:latest
+    container_name: redis-stack
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
