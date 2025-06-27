@@ -26,6 +26,8 @@ WORKDIR /home/devuser/code
 # Copy project files
 COPY --chown=devuser:devuser . .
 
+RUN git config --global --add safe.directory /home/devuser/code
+
 # Create virtual environment and install dependencies
 RUN uv venv .venv && \
     uv pip install -e ".[dev]" --python .venv/bin/python
