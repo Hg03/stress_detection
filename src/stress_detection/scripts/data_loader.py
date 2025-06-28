@@ -63,6 +63,6 @@ def to_feast(configs: dict, preprocessed_train: ibis.table, preprocessed_test: i
     preprocessed_train.execute().to_parquet(os.path.join(configs.data_loading.paths.feature_store, "data/training_data.parquet"))
     preprocessed_test.execute().to_parquet(os.path.join(configs.data_loading.paths.feature_store, "data/testing_data.parquet"))
     store = FeatureStore(repo_path=configs.data_loading.paths.feature_store)
-    from stress_detection.feature_store.feature_definition import employee, employee_training_fv, employee_testing_fv
-    store.apply([employee, employee_training_fv, employee_testing_fv])
+    from stress_detection.feature_store.feature_definition import entity, training_fv, testing_fv
+    store.apply([entity, training_fv, testing_fv])
     store.materialize_incremental(end_date=datetime.utcnow())

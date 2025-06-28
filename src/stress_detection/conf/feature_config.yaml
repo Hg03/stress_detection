@@ -4,8 +4,11 @@ data_loading:
   raw_data_table_name: "raw data"
   paths:
     feature_store: "src/stress_detection/feature_store"
+    training_data: "data/training_data.parquet"
+    testing_data: "data/testing_data.parquet"
   columns:
     unique_key: "employee_id"
+    event_timestamp: "event_timestamp"
     to_drop:
     - "employee_id"
     target: "stress_level"
