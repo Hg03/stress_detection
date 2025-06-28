@@ -3,13 +3,14 @@ from supabase import create_client
 from dotenv import load_dotenv
 from feast import FeatureStore
 from datetime import datetime
+import ibis.expr.types as ir
 from tqdm import tqdm
 import ibis_ml as ml
 import ibis
 import os
 
 
-def from_supabase(configs: dict) -> ibis.table:
+def from_supabase(configs: dict) -> ir.Table:
     load_dotenv()
     conn = create_client(supabase_url=os.getenv("supabase_url"), supabase_key=os.getenv("supabase_key"))
     json_data = []
@@ -32,11 +33,11 @@ def from_supabase(configs: dict) -> ibis.table:
     raw_data = raw_data.filter(raw_data[configs.data_loading.columns.target].notnull())
     return raw_data
 
-def split_data(configs: dict, raw_data: ibis.table) -> tuple[ibis.table, ibis.table]:
+def split_data(configs: dict, raw_data: ir.Table) -> tuple[ir.Table, ir.Table]:
     train, test = ml.train_test_split(raw_data, test_size=configs.preprocess_data.split_ratio, unique_key=configs.data_loading.columns.unique_key, random_seed=0)
     return train, test
 
-def preprocess_data(configs: dict, train: ibis.table, test: ibis.table) -> tuple[ibis.table, ibis.table]:
+def preprocess_data(configs: dict, train: ir.Table, test: ir.Table) -> tuple[ir.Table, ir.Table]:
     num_imputer = ml.ImputeMean(ml.numeric())
     cat_imputer = ml.ImputeMode(ml.string())
 
@@ -56,7 +57,7 @@ def preprocess_data(configs: dict, train: ibis.table, test: ibis.table) -> tuple
     ]).set_output(transform="pandas")
     return ibis.memtable(pipe.fit_transform(train)), ibis.memtable(pipe.transform(test))
 
-def to_feast(configs: dict, preprocessed_train: ibis.table, preprocessed_test: ibis.table) -> None:
+def to_feast(configs: dict, preprocessed_train: ir.Table, preprocessed_test: ir.Table) -> None:
     # Add the column to your Ibis tables
     preprocessed_train = preprocessed_train.mutate(event_timestamp=ibis.now())
     preprocessed_test = preprocessed_test.mutate(event_timestamp=ibis.now())

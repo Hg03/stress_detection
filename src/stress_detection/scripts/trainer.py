@@ -1,11 +1,12 @@
 from feast import FeatureStore
 import ibis
+import ibis.expr.types as ir
 from typing import Any
 import os
 from stress_detection.feature_store.feature_definition import create_schemas
 
 
-def from_feast(configs: dict) -> ibis.expr.types.relations.Table:
+def from_feast(configs: dict) -> ir.Table:
     store = FeatureStore(repo_path=configs.training.paths.feature_store)
 
     train_path = os.path.join(configs.training.paths.feature_store, configs.training.paths.training_data)
@@ -36,8 +37,17 @@ def from_feast(configs: dict) -> ibis.expr.types.relations.Table:
     testing_data = ibis.memtable(test_feature_df)
     return training_data , testing_data
 
-def tune_and_train(configs: dict, preprocessed_train: ibis.table, preprocessed_test: ibis.table) -> Any:
-    return 1
+def get_X_y(preprocessed_data: ir.Table, to_drop: list[str], target_col: str) -> tuple[ir.Table, ir.Table]:
+    return (
+        preprocessed_data.drop(to_drop).drop(target_col),
+        preprocessed_data.select(target_col)
+    )
+def tune_and_train(configs: dict, preprocessed_train: ir.Table, preprocessed_test: ir.Table) -> Any:
+    to_drop = configs.training.columns.to_drop
+    target_col = configs.training.columns.target 
+    X_train, y_train = get_X_y(preprocessed_data=preprocessed_train, to_drop=to_drop, target_col=target_col)
+    X_test, y_test = get_X_y(preprocessed_data=preprocessed_test, to_drop=to_drop, target_col=target_col)
+     
 
-def evaluate_model(configs: dict, model: Any, preprocessed_train: ibis.table, preprocessed_test: ibis.table) -> dict:
+def evaluate_model(configs: dict, model: Any, preprocessed_train: ir.Table, preprocessed_test: ir.Table) -> dict:
     return {}
