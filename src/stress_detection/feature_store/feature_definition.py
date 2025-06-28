@@ -6,9 +6,12 @@ import ibis
 import os
 
 
-def create_schemas():
+def create_schemas(train_or_test: str = "train"):
     configs = load_config("feature")
-    data = ibis.read_parquet(os.path.join(configs.data_loading.paths.feature_store, "data/training_data.parquet"))
+    if train_or_test == "train":
+        data = ibis.read_parquet(os.path.join(configs.data_loading.paths.feature_store, "data/training_data.parquet"))
+    elif train_or_test == "test":
+        data = ibis.read_parquet(os.path.join(configs.data_loading.paths.feature_store, "data/testing_data.parquet"))
     data = data.drop("event_timestamp")
     schema = data.schema()
     list_of_dtypes = {ibis.expr.datatypes.core.float64: Float64, ibis.expr.datatypes.core.string: String, ibis.expr.datatypes.core.int8: Int64, ibis.expr.datatypes.core.int64: Int64}
