@@ -8,8 +8,7 @@ from stress_detection.scripts.utils import model_mappings
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
-from omegaconf import OmegaConf
-from omegaconf.dictconfig import DictConfig
+import mlflow
 
 
 def from_feast(configs: dict) -> ir.Table:
@@ -70,15 +69,26 @@ def make_model_pipeline(configs: dict, models: list[str]) -> GridSearchCV:
     )
 
 
-def tune_and_train(configs: dict, models: list[str], preprocessed_train: ir.Table, preprocessed_test: ir.Table) -> DictConfig:
+def tune_and_train(configs: dict, models: list[str], preprocessed_train: ir.Table, preprocessed_test: ir.Table) -> dict:
     to_drop = configs.training.columns.to_drop
     target_col = configs.training.columns.target 
     X_train, y_train = get_X_y(preprocessed_data=preprocessed_train, to_drop=to_drop, target_col=target_col)
     X_test, y_test = get_X_y(preprocessed_data=preprocessed_test, to_drop=to_drop, target_col=target_col)
     model_pipeline = make_model_pipeline(configs=configs, models=models)
     model_pipeline.fit(X_train, y_train[configs.training.columns.target])
-    return OmegaConf.create({"model": model_pipeline, "X_train": X_train, "y_train": y_train, "X_test": X_test, "y_test": y_test})
+    return {"model": model_pipeline, "X_train": X_train, "y_train": y_train , "X_test": X_test, "y_test": y_test}
      
 
 def evaluate_model(configs: dict, model_artifacts: Any, preprocessed_train: ir.Table, preprocessed_test: ir.Table) -> dict:
+    with mlflow.start_run():
+        model = model_artifacts["model"].best_estimator_
+        X_train, y_train, X_test, y_test = model_artifacts["X_train"], model_artifacts["y_train"], model_artifacts["X_test"], model_artifacts["y_test"]
+        model.fit(X_train, y_train)
+        # train_preds = ibis.memtable({configs.training.columns.target: model.predict(X_train)}).execute()
+        # test_preds = ibis.memtable({configs.training.columns.target:  model.predict(X_test)}).execute()
+        training_score=model.score(X_train, y_train)
+        testing_score=model.score(X_test, y_test)
+        scores = {"training_score": training_score, "testing_score": testing_score}
+        mlflow.sklearn.log_model(model, "model")
+        mlflow.log_metrics(scores)
     return {}
