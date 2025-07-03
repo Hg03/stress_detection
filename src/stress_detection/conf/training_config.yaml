@@ -6,10 +6,46 @@ training:
   columns:
     to_drop:
     - "employee_id"
-    - "event_timestamp
+    - "event_timestamp"
     unique_key: "employee_id"
     event_timestamp: "event_timestamp"
     target: "stress_level"
-  model:
-  - "random forest"
-  - "svm"
+  models:
+    svm:
+      classifier__C:
+      - 0.1
+      - 1.0
+      - 10.0
+      - 100.0
+      classifier__kernel:
+      - "linear"
+      - "rbf"
+      - "poly"
+      classifier__gamma:
+      - "scale"
+      - "auto"
+    rf:
+      classifier__n_estimators:
+      - 50
+      - 100
+      - 200
+      classifier__max_depth:
+      - 3
+      - 5
+      - None
+      classifier__min_samples_split:
+      - 2
+      - 5
+    gb:
+      classifier__n_estimators:
+      - 50
+      - 100
+      - 200
+      classifier__learning_rate:
+      - 0.01
+      - 0.1
+      - 0.2
+      classifier__max_depth:
+      - 3
+      - 5
+      - 7

@@ -4,6 +4,12 @@ import ibis.expr.types as ir
 from typing import Any
 import os
 from stress_detection.feature_store.feature_definition import create_schemas
+from stress_detection.scripts.utils import model_mappings
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV
+from omegaconf import OmegaConf
+from omegaconf.dictconfig import DictConfig
 
 
 def from_feast(configs: dict) -> ir.Table:
@@ -39,15 +45,40 @@ def from_feast(configs: dict) -> ir.Table:
 
 def get_X_y(preprocessed_data: ir.Table, to_drop: list[str], target_col: str) -> tuple[ir.Table, ir.Table]:
     return (
-        preprocessed_data.drop(to_drop).drop(target_col),
-        preprocessed_data.select(target_col)
+        preprocessed_data.drop(to_drop).drop(target_col).execute(),
+        preprocessed_data.select(target_col).execute()
     )
-def tune_and_train(configs: dict, preprocessed_train: ir.Table, preprocessed_test: ir.Table) -> Any:
+
+def make_model_pipeline(configs: dict, models: list[str]) -> GridSearchCV:
+    param_grid = []
+    for model in models:
+        model_instance = model_mappings(model_name=model)
+        model_params = configs.training.models.get(model, {})
+        model_param_dict = {
+            "classifier": [model_instance]
+        }
+        model_param_dict.update(model_params)
+        param_grid.append(model_param_dict)
+    
+    pipeline = Pipeline([("classifier", LogisticRegression())])
+    return GridSearchCV(
+        estimator=pipeline,
+        param_grid=param_grid,
+        cv=2,
+        scoring='accuracy',
+        verbose=1
+    )
+
+
+def tune_and_train(configs: dict, models: list[str], preprocessed_train: ir.Table, preprocessed_test: ir.Table) -> DictConfig:
     to_drop = configs.training.columns.to_drop
     target_col = configs.training.columns.target 
     X_train, y_train = get_X_y(preprocessed_data=preprocessed_train, to_drop=to_drop, target_col=target_col)
     X_test, y_test = get_X_y(preprocessed_data=preprocessed_test, to_drop=to_drop, target_col=target_col)
+    model_pipeline = make_model_pipeline(configs=configs, models=models)
+    model_pipeline.fit(X_train, y_train[configs.training.columns.target])
+    return OmegaConf.create({"model": model_pipeline, "X_train": X_train, "y_train": y_train, "X_test": X_test, "y_test": y_test})
      
 
-def evaluate_model(configs: dict, model: Any, preprocessed_train: ir.Table, preprocessed_test: ir.Table) -> dict:
+def evaluate_model(configs: dict, model_artifacts: Any, preprocessed_train: ir.Table, preprocessed_test: ir.Table) -> dict:
     return {}
