@@ -6,11 +6,12 @@ services:
     container_name: python-dev
     volumes:
       - .:/home/devuser/code
-      - /home/devuser/code/.venv  # Anonymous volume for venv
+      - /home/devuser/code/.venv
     ports:
-      - "8000:8000"  # Add any ports your app needs
+      - "8000:8000"
     depends_on:
       - redis
+      - mlflow
     environment:
       - REDIS_URL=redis://redis:6379
     stdin_open: true
@@ -24,6 +25,21 @@ services:
       - "8001:8001"
     volumes:
       - redis_data:/data
+
+  mlflow:
+    image: python:3.10-slim
+    container_name: mlflow-server
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlruns:/mlflow/mlruns
+    environment:
+      - MLFLOW_SERVER_PORT=5000
+    command: >
+      sh -c "
+      pip install mlflow &&
+      mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow.db --default-artifact-root /mlflow/mlruns"
+    working_dir: /mlflow
 
 volumes:
   redis_data:

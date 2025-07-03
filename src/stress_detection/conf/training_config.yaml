@@ -32,7 +32,7 @@ training:
       classifier__max_depth:
       - 3
       - 5
-      - None
+      - 7
       classifier__min_samples_split:
       - 2
       - 5
