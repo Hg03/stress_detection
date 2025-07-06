@@ -25,8 +25,8 @@ def from_feast(configs: dict) -> ir.Table:
     train_entity_df = train_entity_expr.execute()
     test_entity_df = test_entity_expr.execute()
 
-    train_features = [f"employee_training_features:{field.name}" for field in create_schemas() if field.name != configs.training.columns.unique_key]
-    test_features = [f"employee_testing_features:{field.name}" for field in create_schemas(train_or_test="test") if field.name != configs.training.columns.unique_key]
+    train_features = [f"training_features:{field.name}" for field in create_schemas() if field.name != configs.training.columns.unique_key]
+    test_features = [f"testing_features:{field.name}" for field in create_schemas(train_or_test="test") if field.name != configs.training.columns.unique_key]
 
     # Fetch historical features
     train_feature_df = store.get_historical_features(
@@ -80,7 +80,7 @@ def tune_and_train(configs: dict, models: list[str], preprocessed_train: ir.Tabl
      
 
 def evaluate_model(configs: dict, model_artifacts: Any, preprocessed_train: ir.Table, preprocessed_test: ir.Table) -> dict:
-    mlflow.set_tracking_uri('http://localhost:5000')
+    mlflow.set_tracking_uri('http://mlflow:5000')
     with mlflow.start_run():
         model = model_artifacts["model"].best_estimator_
         X_train, y_train, X_test, y_test = model_artifacts["X_train"], model_artifacts["y_train"], model_artifacts["X_test"], model_artifacts["y_test"]
@@ -90,6 +90,6 @@ def evaluate_model(configs: dict, model_artifacts: Any, preprocessed_train: ir.T
         training_score=model.score(X_train, y_train)
         testing_score=model.score(X_test, y_test)
         scores = {"training_score": training_score, "testing_score": testing_score}
-        mlflow.sklearn.log_model(model, "model")
+        # mlflow.sklearn.log_model(sk_model=model, name="model")
         mlflow.log_metrics(scores)
     return {}

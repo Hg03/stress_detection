@@ -1,8 +1,8 @@
 {
     "name": "Python Dev Environment",
-    "dockerComposeFile": "../docker-compose.yaml",
+    "dockerComposeFile": "../docker-compose.yml",
     "service": "dev",
-    "workspaceFolder": "/home/devuser/code",
+    "workspaceFolder": "/workspace",
     "shutdownAction": "stopCompose",
     "customizations": {
         "vscode": {
@@ -13,11 +13,11 @@
                 "charliermarsh.ruff"
             ],
             "settings": {
-                "python.defaultInterpreterPath": "/home/devuser/code/.venv/bin/python",
+                "python.defaultInterpreterPath": "/workspace/.venv/bin/python",
                 "python.terminal.activateEnvironment": false
             }
         }
     },
     "remoteUser": "devuser",
-    "postCreateCommand": "echo 'Dev container ready!'"
+    "postCreateCommand": "echo 'Dev container ready! Python venv activated.'"
 }

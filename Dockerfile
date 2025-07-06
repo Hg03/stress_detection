@@ -1,6 +1,6 @@
 FROM python:3.10-slim-bookworm
 
-# Install system dependencies including zsh
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -11,34 +11,31 @@ RUN apt-get update && apt-get install -y \
 # Install uv
 RUN pip install uv
 
-# Install development tools
-RUN pip install ruff black mypy
-
-# Create a non-root user with zsh as default shell
+# Create non-root user with zsh
 RUN useradd -m -s /bin/zsh devuser
 USER devuser
 
 # Install Oh My Zsh
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
-WORKDIR /home/devuser/code
+WORKDIR /workspace
 
 # Copy project files
 COPY --chown=devuser:devuser . .
 
-RUN git config --global --add safe.directory /home/devuser/code
+# Set git safe directory
+RUN git config --global --add safe.directory /workspace
 
-# Create virtual environment and install dependencies
+# Create and activate virtual environment
 RUN uv venv .venv && \
     uv pip install -e ".[dev]" --python .venv/bin/python
 
-# Add .venv to PATH and create activation alias in zsh config
-RUN echo 'export PATH="/home/devuser/code/.venv/bin:$PATH"' >> ~/.zshrc && \
-    echo 'alias activate="source /home/devuser/code/.venv/bin/activate"' >> ~/.zshrc
+# Configure zsh to auto-activate venv
+RUN echo 'source /workspace/.venv/bin/activate' >> ~/.zshrc && \
+    echo 'echo "Python virtual environment activated"' >> ~/.zshrc
 
-# Set environment variables
-ENV PATH="/home/devuser/code/.venv/bin:$PATH"
-ENV VIRTUAL_ENV="/home/devuser/code/.venv"
+# Set environment variables for activated venv
+ENV VIRTUAL_ENV="/workspace/.venv"
+ENV PATH="/workspace/.venv/bin:$PATH"
 
-# Default command
 CMD ["/bin/zsh"]

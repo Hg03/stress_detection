@@ -5,8 +5,9 @@ services:
     build: .
     container_name: python-dev
     volumes:
-      - .:/home/devuser/code
-      - /home/devuser/code/.venv
+      - .:/workspace
+      - /workspace/.venv
+      - ./mlruns:/app/mlruns
     ports:
       - "8000:8000"
     depends_on:
@@ -14,6 +15,7 @@ services:
       - mlflow
     environment:
       - REDIS_URL=redis://redis:6379
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
     stdin_open: true
     tty: true
 
@@ -27,19 +29,23 @@ services:
       - redis_data:/data
 
   mlflow:
-    image: python:3.10-slim
     container_name: mlflow-server
+    image: ghcr.io/mlflow/mlflow:v2.22.0
     ports:
       - "5000:5000"
     volumes:
-      - ./mlruns:/mlflow/mlruns
+      - mlflow_data:/mlflow
     environment:
-      - MLFLOW_SERVER_PORT=5000
+      - MLFLOW_BACKEND_STORE_URI=sqlite:///mlflow/mlflow.db
+      - MLFLOW_ARTIFACTS_DESTINATION=/mlflow/mlruns
     command: >
-      sh -c "
-      pip install mlflow &&
-      mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow.db --default-artifact-root /mlflow/mlruns"
-    working_dir: /mlflow
+      mlflow server 
+      --backend-store-uri sqlite:///mlflow/mlflow.db 
+      --default-artifact-root /mlflow/mlruns 
+      --host 0.0.0.0 
+      --port 5000
+    restart: unless-stopped
 
 volumes:
   redis_data:
+  mlflow_data:
