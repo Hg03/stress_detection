@@ -7,15 +7,15 @@ services:
     volumes:
       - .:/workspace
       - /workspace/.venv
-      - ./mlruns:/app/mlruns
     ports:
       - "8000:8000"
     depends_on:
       - redis
-      - mlflow
     environment:
       - REDIS_URL=redis://redis:6379
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+      - DAGSHUB_USERNAME=${DAGSHUB_USERNAME}
+      - DAGSHUB_TOKEN=${DAGSHUB_TOKEN}
     stdin_open: true
     tty: true
 
@@ -28,24 +28,5 @@ services:
     volumes:
       - redis_data:/data
 
-  mlflow:
-    container_name: mlflow-server
-    image: ghcr.io/mlflow/mlflow:v2.22.0
-    ports:
-      - "5000:5000"
-    volumes:
-      - mlflow_data:/mlflow
-    environment:
-      - MLFLOW_BACKEND_STORE_URI=sqlite:///mlflow/mlflow.db
-      - MLFLOW_ARTIFACTS_DESTINATION=/mlflow/mlruns
-    command: >
-      mlflow server 
-      --backend-store-uri sqlite:///mlflow/mlflow.db 
-      --default-artifact-root /mlflow/mlruns 
-      --host 0.0.0.0 
-      --port 5000
-    restart: unless-stopped
-
 volumes:
   redis_data:
-  mlflow_data:

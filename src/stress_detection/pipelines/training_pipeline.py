@@ -1,7 +1,7 @@
 from stress_detection.scripts.trainer import from_feast, tune_and_train, evaluate_model
 
 class train_orchestrator:
-    def __init__(self, training_configs: dict, models: list = ["svm", "rf"]):
+    def __init__(self, training_configs: dict, models: list = ["svm"]):
         self.configs = training_configs
         self.models = models
 

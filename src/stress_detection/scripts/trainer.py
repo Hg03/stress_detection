@@ -9,7 +9,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 import mlflow
-
+import dagshub
+dagshub.init(repo_owner=os.getenv("DAGSHUB_USERNAME"), repo_name='stress_detection', mlflow=True)
+dagshub.auth.add_app_token(token=os.getenv('DAGSHUB_TOKEN'))
 
 def from_feast(configs: dict) -> ir.Table:
     store = FeatureStore(repo_path=configs.training.paths.feature_store)
@@ -80,7 +82,7 @@ def tune_and_train(configs: dict, models: list[str], preprocessed_train: ir.Tabl
      
 
 def evaluate_model(configs: dict, model_artifacts: Any, preprocessed_train: ir.Table, preprocessed_test: ir.Table) -> dict:
-    mlflow.set_tracking_uri('http://mlflow:5000')
+    mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI"))
     with mlflow.start_run():
         model = model_artifacts["model"].best_estimator_
         X_train, y_train, X_test, y_test = model_artifacts["X_train"], model_artifacts["y_train"], model_artifacts["X_test"], model_artifacts["y_test"]

@@ -13,6 +13,7 @@ authors = [
     {name = "Harish", email = "gehloth03@gmail.com"},
 ]
 dependencies = [
+    "dagshub>=0.5.10",
     "fastapi>=0.115.13",
     "feast[redis]>=0.49.0",
     "ibis-framework[duckdb]>=10.5.0",
