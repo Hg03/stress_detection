@@ -38,14 +38,33 @@ class Infer_Orchestrator:
             return None, f"Request failed: {e}"
 
     def execute(self):
-        submit = self._render_form()
-        if submit:
-            with st.spinner("Sending data to model..."):
-                result, error = self._call_api()
-                if error:
-                    st.error(error)
-                else:
-                    st.success(f"Predicted Stress Level: {result['stress_level']}")
+        options = st.sidebar.selectbox("What to Execute ?", ("Inference", "Feature Engineer", "Trainer"))
+        if options == "Inference":
+            submit = self._render_form()
+            if submit:
+                with st.spinner("Sending data to model..."):
+                    result, error = self._call_api()
+                    if error:
+                        st.error(error)
+                    else:
+                        st.success(f"Predicted Stress Level: {result['stress_level']}")
+        elif options == "Feature Engineer":
+            if st.button("Trigger Feature Engineering Pipeline"):
+                from stress_detection.pipelines.feature_pipeline import fe_orchestrator
+                from stress_detection.scripts.utils import load_config
+                instance = fe_orchestrator(feature_configs=load_config("feature"))
+                st.warning("Started...")
+                instance.execute()
+                st.success("Done...")
+        elif options == "Trainer":
+            if st.button("Trigger Training Pipeline"):
+                from stress_detection.pipelines.training_pipeline import train_orchestrator
+                from stress_detection.scripts.utils import load_config
+                instance = train_orchestrator(training_configs=load_config("training"))
+                st.warning("Started...")
+                instance.execute()
+                st.success("Done...")
+
             
 if __name__ == "__main__":
     inst = Infer_Orchestrator({})
