@@ -6,8 +6,12 @@ from datetime import datetime
 import ibis.expr.types as ir
 from tqdm import tqdm
 import ibis_ml as ml
+import warnings
 import ibis
 import os
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 
 
 def from_supabase(configs: dict) -> ir.Table:

@@ -135,6 +135,7 @@ celerybeat.pid
 .env
 .envrc
 .venv
+src/stress_detection/models/
 env/
 venv/
 .metaflow/
