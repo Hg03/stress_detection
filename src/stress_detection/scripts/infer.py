@@ -5,7 +5,6 @@ from typing import Annotated
 import joblib
 import ibis
 import os
-ibis.options.interactive = True
 
 app = FastAPI()
 
@@ -33,8 +32,7 @@ def trigger_api(configs: dict):
 async def root():
     return {"message": "Hello World"}
 
-
-@app.post("/infer/")
+@app.post("/infer/", tags=["Inference"])
 async def infer(
     employee_id: Annotated[str, Form(description="EMP_123")],
     avg_working_hours_per_day: Annotated[float, Form(..., ge=0, le=24)],

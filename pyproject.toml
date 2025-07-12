@@ -25,6 +25,7 @@ dependencies = [
     "pyarrow-hotfix>=0.7",
     "scikit-learn>=1.7.0",
     "seaborn>=0.13.2",
+    "streamlit>=1.46.1",
     "supabase>=2.15.3",
     "tensorflow>=2.19.0",
     "uvicorn>=0.34.0",
