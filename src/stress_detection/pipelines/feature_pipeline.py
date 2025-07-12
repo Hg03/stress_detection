@@ -11,3 +11,8 @@ class fe_orchestrator:
         preprocessed_train, preprocessed_test = preprocess_data(self.configs, train, test)
         to_feast(self.configs, preprocessed_train, preprocessed_test)
         print("Feature engineering pipeline executed successfully.")
+
+if __name__ == "__main__":
+    from stress_detection.scripts.utils import load_config
+    orchestrator = fe_orchestrator(feature_configs=load_config("feature"))
+    orchestrator.execute()

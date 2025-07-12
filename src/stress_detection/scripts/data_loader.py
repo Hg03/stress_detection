@@ -7,6 +7,8 @@ import ibis.expr.types as ir
 from tqdm import tqdm
 import ibis_ml as ml
 import warnings
+import secrets
+import joblib
 import ibis
 import os
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -59,6 +61,9 @@ def preprocess_data(configs: dict, train: ir.Table, test: ir.Table) -> tuple[ir.
     pipe = Pipeline([
         ('preprocessor', recipe)
     ]).set_output(transform="pandas")
+    os.makedirs(configs.data_loading.paths.models, exist_ok=True)
+    preprocessing_pipeline_path = os.path.join(configs.data_loading.paths.models, f"preprocess_{secrets.token_hex(4)}.pkl")
+    joblib.dump(pipe.fit(train), preprocessing_pipeline_path)
     return ibis.memtable(pipe.fit_transform(train)), ibis.memtable(pipe.transform(test))
 
 def to_feast(configs: dict, preprocessed_train: ir.Table, preprocessed_test: ir.Table) -> None:

@@ -1,17 +1,20 @@
 from stress_detection.feature_store.feature_definition import create_schemas
 from stress_detection.scripts.utils import model_mappings
+from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from feast import FeatureStore
 import ibis.expr.types as ir
 from typing import Any
+import warnings
 import secrets
 import dagshub
 import joblib
 import mlflow
 import ibis
 import os
+warnings.filterwarnings("ignore", category=UndefinedMetricWarning)
 
 def from_feast(configs: dict) -> ir.Table:
     store = FeatureStore(repo_path=configs.training.paths.feature_store)

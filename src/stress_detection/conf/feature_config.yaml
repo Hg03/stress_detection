@@ -6,6 +6,7 @@ data_loading:
     feature_store: "src/stress_detection/feature_store"
     training_data: "data/training_data.parquet"
     testing_data: "data/testing_data.parquet"
+    models: "src/stress_detection/models"
   columns:
     unique_key: "employee_id"
     event_timestamp: "event_timestamp"

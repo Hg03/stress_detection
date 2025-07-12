@@ -11,3 +11,8 @@ class train_orchestrator:
         model_artifacts = tune_and_train(self.configs, self.models, preprocessed_train, preprocessed_test)
         evaluate_model(self.configs, model_artifacts)
         print("Training pipeline executed successfully.")
+
+if __name__ == "__main__":
+    from stress_detection.scripts.utils import load_config
+    orchestrator = train_orchestrator(training_configs=load_config("training"))
+    orchestrator.execute()

@@ -1,2 +1,4 @@
-inference:
-  sample: True
+infer:
+  paths:
+    models: "src/stress_detection/models"
+  
