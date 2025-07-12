@@ -9,5 +9,5 @@ class train_orchestrator:
         print("Starting training pipeline...")
         preprocessed_train, preprocessed_test = from_feast(self.configs)
         model_artifacts = tune_and_train(self.configs, self.models, preprocessed_train, preprocessed_test)
-        evaluate_model(self.configs, model_artifacts, preprocessed_train, preprocessed_test)
+        evaluate_model(self.configs, model_artifacts)
         print("Training pipeline executed successfully.")
