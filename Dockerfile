@@ -38,4 +38,4 @@ RUN echo 'source /workspace/.venv/bin/activate' >> ~/.zshrc && \
 ENV VIRTUAL_ENV="/workspace/.venv"
 ENV PATH="/workspace/.venv/bin:$PATH"
 
-CMD ["/bin/zsh"]
+CMD ["fastapi", "dev", "src/stress_detection/scripts/infer.py", "--port", "8080"]

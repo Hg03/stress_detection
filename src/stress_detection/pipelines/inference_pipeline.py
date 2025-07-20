@@ -8,7 +8,6 @@ class Infer_Orchestrator:
         self.payload = {}
 
     def _render_form(self):
-        st.title("Stress Level Prediction")
         with st.form("stress_form"):
             self.payload["employee_id"] = st.text_input("Employee ID", value="EMP_123")
             self.payload["avg_working_hours_per_day"] = st.slider("Average Working Hours Per Day", 0.0, 24.0, 8.0)
@@ -38,8 +37,13 @@ class Infer_Orchestrator:
             return None, f"Request failed: {e}"
 
     def execute(self):
-        options = st.sidebar.selectbox("What to Execute ?", ("Inference", "Feature Engineer", "Trainer"))
-        if options == "Inference":
+        st.title("Stress Level Prediction")
+        st.success("Please read the README before using this app.", icon="ℹ️")
+        with st.sidebar.expander("README"):
+            st.markdown("Yooo")
+        inference_tab, scripts_tab = st.tabs(["Inference", "Scripts"])
+
+        with inference_tab:
             submit = self._render_form()
             if submit:
                 with st.spinner("Sending data to model..."):
@@ -48,22 +52,31 @@ class Infer_Orchestrator:
                         st.error(error)
                     else:
                         st.success(f"Predicted Stress Level: {result['stress_level']}")
-        elif options == "Feature Engineer":
-            if st.button("Trigger Feature Engineering Pipeline"):
-                from stress_detection.pipelines.feature_pipeline import fe_orchestrator
-                from stress_detection.scripts.utils import load_config
-                instance = fe_orchestrator(feature_configs=load_config("feature"))
-                st.warning("Started...")
-                instance.execute()
-                st.success("Done...")
-        elif options == "Trainer":
-            if st.button("Trigger Training Pipeline"):
-                from stress_detection.pipelines.training_pipeline import train_orchestrator
-                from stress_detection.scripts.utils import load_config
-                instance = train_orchestrator(training_configs=load_config("training"))
-                st.warning("Started...")
-                instance.execute()
-                st.success("Done...")
+        with scripts_tab:
+            options = st.selectbox("Select Script", ["Feature Engineer", "Trainer"])
+            if options == "Feature Engineer":
+                if st.button("Trigger Feature Engineering Pipeline"):
+                    from stress_detection.pipelines.feature_pipeline import fe_orchestrator
+                    from stress_detection.scripts.utils import load_config
+                    instance = fe_orchestrator(feature_configs=load_config("feature"))
+                    st.warning("Started...")
+                    instance.execute()
+                    st.link_button(label="Redis Stack Browser", url="http://localhost:8001/redis-stack/browser")
+                    st.success("Done...")
+            elif options == "Trainer":
+                if st.button("Trigger Training Pipeline"):
+                    from stress_detection.pipelines.training_pipeline import train_orchestrator
+                    from stress_detection.scripts.utils import load_config
+                    instance = train_orchestrator(training_configs=load_config("training"))
+                    try:
+                        st.warning("Started...")
+                        instance.execute()
+                        st.link_button(label="Dagshub Mlflow Server", url="https://dagshub.com/Hg03/stress_detection.mlflow")
+                        st.success("Done...")
+                    except Exception as e:
+                        st.error(f"Probably we don't have any model present. Please run the feature engineering pipeline first. {e}")
+
+            
 
             
 if __name__ == "__main__":
