@@ -39,8 +39,9 @@ class Infer_Orchestrator:
     def execute(self):
         st.title("Stress Level Prediction")
         st.success("Please read the README before using this app.", icon="ℹ️")
+        st.sidebar.image('/workspace/image.png', use_container_width=True)
         with st.sidebar.expander("README"):
-            st.markdown("Yooo")
+            st.markdown("Unlock the power of machine learning for mental well-being with our Stress Level Predictor! 🚦🤖 Effortlessly go from raw data to actionable insights as this project streamlines the entire MLOps cycle—automated processing, seamless deployment, and real-time monitoring—helping you predict stress like a pro. 🌟💡 Whether you're scaling in the cloud or experimenting locally, this repo makes stress detection reliable, efficient, and production-ready.")
         inference_tab, scripts_tab = st.tabs(["Inference", "Scripts"])
 
         with inference_tab:
