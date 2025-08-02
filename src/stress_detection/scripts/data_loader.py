@@ -18,7 +18,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 def from_supabase(configs: dict) -> ir.Table:
     load_dotenv()
-    conn = create_client(supabase_url=os.getenv("supabase_url"), supabase_key=os.getenv("supabase_key"))
+    conn = create_client(supabase_url=os.getenv("SUPABASE_URL"), supabase_key=os.getenv("SUPABASE_KEY"))
     json_data = []
     batch_size, offset = configs.data_loading.batch_size, configs.data_loading.offset
     total_rows = conn.table(configs.data_loading.raw_data_table_name).select("count", count="exact").execute().count
