@@ -48,6 +48,7 @@ jobs:
       - name: Start Redis
         uses: supercharge/redis-github-action@1.4.0
         with:
+          redis_host: localhost
           redis_version: 'latest'
           redis_port: 6379
       - name: Run feature pipeline

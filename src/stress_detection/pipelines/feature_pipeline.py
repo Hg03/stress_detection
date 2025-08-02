@@ -1,6 +1,7 @@
 from stress_detection.scripts.data_loader import from_supabase, split_data, preprocess_data, to_feast
 
 class fe_orchestrator:
+    # Feature Engineering Orchestrator
     def __init__(self, feature_configs: dict):
         self.configs = feature_configs
 
