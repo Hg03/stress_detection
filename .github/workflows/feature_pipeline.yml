@@ -19,11 +19,6 @@ permissions:
 jobs:
   run-feature-pipeline:
     runs-on: ubuntu-latest
-    services:
-      redis:
-        image: redis:latest
-        ports:
-          - 6379:6379
     env:
       DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
       DAGSHUB_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
@@ -49,7 +44,12 @@ jobs:
         run: |
           uv venv .venv
           uv pip install -e ".[dev]" --python .venv/bin/python
-
+      
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.4.0
+        with:
+          redis_version: 'latest'
+          redis_port: 6379
       - name: Run feature pipeline
         run: |
           source .venv/bin/activate
