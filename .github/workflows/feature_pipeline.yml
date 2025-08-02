@@ -19,6 +19,11 @@ permissions:
 jobs:
   run-feature-pipeline:
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
     env:
       DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
       DAGSHUB_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
@@ -26,6 +31,8 @@ jobs:
       MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
