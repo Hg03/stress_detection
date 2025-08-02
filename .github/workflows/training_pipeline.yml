@@ -1,0 +1,60 @@
+name: CML Training Pipeline
+
+on:
+  push:
+    paths:
+      - 'src/stress_detection/conf/training_config.yaml'
+      - 'src/stress_detection/pipelines/training_pipeline.py'
+      - 'src/stress_detection/scripts/trainer.py'
+  pull_request:
+    paths:
+      - 'src/stress_detection/conf/training_config.yaml'
+      - 'src/stress_detection/pipelines/training_pipeline.py'
+      - 'src/stress_detection/scripts/trainer.py'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  run-training-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install dependencies
+        run: |
+          uv venv .venv
+          uv pip install -e ".[dev]" --python .venv/bin/python
+
+      - name: Run training pipeline
+        run: |
+          source .venv/bin/activate
+          python src/stress_detection/pipelines/training_pipeline.py
+
+      # Add below if you want to post a CML report
+      - name: Create CML report (optional)
+        run: |
+          echo "## Training Pipeline Run" > report.md
+          # Append metrics or summary here, e.g. cat metrics.txt >> report.md
+
+      - name: Publish CML report as PR comment
+        if: github.event_name == 'pull_request'
+        uses: iterative/setup-cml@v2
+
+      - name: Add PR comment
+        if: github.event_name == 'pull_request'
+        env:
+          REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cml comment create report.md
