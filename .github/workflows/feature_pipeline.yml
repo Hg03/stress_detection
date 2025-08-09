@@ -92,6 +92,7 @@ jobs:
 
       - name: Set up environment variables
         run: |
+          echo "SUPABASE_URL=${{secrets.SUPABASE_URL}}" >> $SUPABASE_URL
           echo "REDIS_URL=redis://localhost:6379" >> $GITHUB_ENV
           echo "MLFLOW_TRACKING_URI=${{ secrets.MLFLOW_TRACKING_URI }}" >> $GITHUB_ENV
           echo "DAGSHUB_USERNAME=${{ secrets.DAGSHUB_USERNAME }}" >> $GITHUB_ENV
