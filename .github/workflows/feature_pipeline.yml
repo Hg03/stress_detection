@@ -43,6 +43,15 @@ jobs:
   feature-pipeline:
     runs-on: ubuntu-latest
     
+    env:
+      REDIS_URL: redis://localhost:6379
+      MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+      DAGSHUB_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
+      DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY}}
+
+    
     services:
       redis:
         image: redis/redis-stack:latest
@@ -89,14 +98,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y redis-tools
-
-      - name: Set up environment variables
-        run: |
-          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> $SUPABASE_URL
-          echo "REDIS_URL=redis://localhost:6379" >> $GITHUB_ENV
-          echo "MLFLOW_TRACKING_URI=${{ secrets.MLFLOW_TRACKING_URI }}" >> $GITHUB_ENV
-          echo "DAGSHUB_USERNAME=${{ secrets.DAGSHUB_USERNAME }}" >> $GITHUB_ENV
-          echo "DAGSHUB_TOKEN=${{ secrets.DAGSHUB_TOKEN }}" >> $GITHUB_ENV
 
       - name: Wait for Redis to be ready
         run: |
