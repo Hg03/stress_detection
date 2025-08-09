@@ -1,27 +1,31 @@
+name: CML Feature Pipeline
+
+on:
+  push:
+    paths:
+      - 'src/stress_detection/conf/feature_config.yaml'
+      - 'src/stress_detection/pipelines/feature_pipeline.py'
+      - 'src/stress_detection/scripts/data_loader.py'
+  pull_request:
+    paths:
+      - 'src/stress_detection/conf/feature_config.yaml'
+      - 'src/stress_detection/pipelines/feature_pipeline.py'
+      - 'src/stress_detection/scripts/data_loader.py'
+
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   run-feature-pipeline:
     runs-on: ubuntu-latest
-
-    services:
-      redis:
-        image: redis/redis-stack:latest
-        ports:
-          - 6379:6379
-        # options: >-
-        #   --health-cmd "redis-cli ping"
-        #   --health-interval 10s
-        #   --health-timeout 5s
-        #   --health-retries 5
-
     env:
-      REDIS_URL: redis://localhost:6379
       DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
       DAGSHUB_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
       MLFLOW_EXPERIMENT_NAME: ${{ secrets.MLFLOW_EXPERIMENT_NAME }}
       MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -30,12 +34,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-
-      - name: Install redis-cli
-        run: sudo apt-get update && sudo apt-get install -y redis-tools
-
-      # - name: Test Redis connectivity
-      #   run: redis-cli -h localhost ping
 
       - name: Install uv
         run: pip install uv
@@ -49,3 +47,20 @@ jobs:
         run: |
           source .venv/bin/activate
           python src/stress_detection/pipelines/feature_pipeline.py
+
+      # Add below if you want to post a CML report
+      - name: Create CML report (optional)
+        run: |
+          echo "## Feature Pipeline Run" > report.md
+          # Append metrics or summary here, e.g. cat metrics.txt >> report.md
+
+      - name: Publish CML report as PR comment
+        if: github.event_name == 'pull_request'
+        uses: iterative/setup-cml@v2
+
+      - name: Add PR comment
+        if: github.event_name == 'pull_request'
+        env:
+          REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cml comment create report.md
