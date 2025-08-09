@@ -1,88 +1,131 @@
-name: CML Feature Pipeline
+name: Feature Pipeline
 
 on:
+  # Trigger on push to main branch
   push:
+    branches: [ main, develop ]
     paths:
-      - 'src/stress_detection/conf/feature_config.yaml'
       - 'src/stress_detection/pipelines/feature_pipeline.py'
-      - 'src/stress_detection/scripts/data_loader.py'
+      - 'src/stress_detection/feature_store/**'
+      - 'src/stress_detection/data/**'
+      - '.github/workflows/feature_pipeline.yaml'
+  
+  # Trigger on pull requests
   pull_request:
+    branches: [ main ]
     paths:
-      - 'src/stress_detection/conf/feature_config.yaml'
       - 'src/stress_detection/pipelines/feature_pipeline.py'
-      - 'src/stress_detection/scripts/data_loader.py'
+      - 'src/stress_detection/feature_store/**'
+      - 'src/stress_detection/data/**'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to run against'
+        required: false
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+  
+  # Schedule to run daily at 2 AM UTC
+  schedule:
+    - cron: '0 2 * * *'
 
-permissions:
-  contents: write
-  pull-requests: write
+env:
+  PYTHON_VERSION: "3.10"
+  REGISTRY_PATH: "ghcr.io/${{ github.repository }}"
 
 jobs:
-  run-feature-pipeline:
+  feature-pipeline:
     runs-on: ubuntu-latest
+    
     services:
       redis:
-        image: redis:7-alpine
+        image: redis/redis-stack:latest
         ports:
           - 6379:6379
+          - 8001:8001
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    env:
-      DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-      DAGSHUB_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
-      MLFLOW_EXPERIMENT_NAME: ${{ secrets.MLFLOW_EXPERIMENT_NAME }}
-      MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install uv
         run: pip install uv
 
-      - name: Install dependencies
+      - name: Cache uv dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: Create virtual environment and install dependencies
         run: |
           uv venv .venv
           uv pip install -e ".[dev]" --python .venv/bin/python
 
-      - name: Install Redis CLI and wait for Redis
-        run: |
-          sudo apt-get update && sudo apt-get install -y redis-tools
-          timeout 30s bash -c 'until redis-cli -h localhost -p 6379 ping; do echo "Waiting for Redis..."; sleep 2; done'
-          echo "Redis is ready!"
+      - name: Activate virtual environment
+        run: echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV && echo "$PWD/.venv/bin" >> $GITHUB_PATH
 
-      # ADD THIS STEP HERE - after dependencies are installed but before running the pipeline
-      - name: Update Feast config for CI
+      - name: Set up environment variables
         run: |
-          sed -i 's/redis:6379/localhost:6379/g' src/stress_detection/feature_store/feature_store.yaml
-          echo "Updated Feast config:"
-          cat feature_store.yml
+          echo "REDIS_URL=redis://localhost:6379" >> $GITHUB_ENV
+          echo "MLFLOW_TRACKING_URI=${{ secrets.MLFLOW_TRACKING_URI }}" >> $GITHUB_ENV
+          echo "DAGSHUB_USERNAME=${{ secrets.DAGSHUB_USERNAME }}" >> $GITHUB_ENV
+          echo "DAGSHUB_TOKEN=${{ secrets.DAGSHUB_TOKEN }}" >> $GITHUB_ENV
+
+      - name: Wait for Redis to be ready
+        run: |
+          timeout 30 bash -c 'until redis-cli -h localhost -p 6379 ping; do sleep 1; done'
+
+      - name: Run feature pipeline tests (if any)
+        run: |
+          # Run any tests related to feature pipeline
+          if [ -f "tests/test_feature_pipeline.py" ]; then
+            python -m pytest tests/test_feature_pipeline.py -v
+          fi
 
       - name: Run feature pipeline
         run: |
-          source .venv/bin/activate
           python src/stress_detection/pipelines/feature_pipeline.py
-
-      - name: Create CML report (optional)
-        run: |
-          echo "## Feature Pipeline Run" > report.md
-          echo "Pipeline completed successfully" >> report.md
-
-      - name: Publish CML report as PR comment
-        if: github.event_name == 'pull_request'
-        uses: iterative/setup-cml@v2
-
-      - name: Add PR comment
-        if: github.event_name == 'pull_request'
         env:
-          REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cml comment create report.md
+          ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
+
+      - name: Upload feature pipeline artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: feature-pipeline-artifacts
+          path: |
+            data/
+            logs/
+            *.log
+          retention-days: 7
+
+      - name: Notify on failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          channel: '#ml-pipeline-alerts'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
