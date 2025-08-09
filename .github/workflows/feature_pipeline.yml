@@ -85,6 +85,11 @@ jobs:
       - name: Activate virtual environment
         run: echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV && echo "$PWD/.venv/bin" >> $GITHUB_PATH
 
+      - name: Install Redis CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y redis-tools
+
       - name: Set up environment variables
         run: |
           echo "REDIS_URL=redis://localhost:6379" >> $GITHUB_ENV
