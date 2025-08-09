@@ -36,9 +36,6 @@ jobs:
       MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      REDIS_HOST: localhost
-      REDIS_PORT: 6379
-      REDIS_CONNECTION_STRING: localhost:6379
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -61,6 +58,13 @@ jobs:
           sudo apt-get update && sudo apt-get install -y redis-tools
           timeout 30s bash -c 'until redis-cli -h localhost -p 6379 ping; do echo "Waiting for Redis..."; sleep 2; done'
           echo "Redis is ready!"
+
+      # ADD THIS STEP HERE - after dependencies are installed but before running the pipeline
+      - name: Update Feast config for CI
+        run: |
+          sed -i 's/redis:6379/localhost:6379/g' feature_store.yml
+          echo "Updated Feast config:"
+          cat feature_store.yml
 
       - name: Run feature pipeline
         run: |
