@@ -62,7 +62,7 @@ jobs:
       # ADD THIS STEP HERE - after dependencies are installed but before running the pipeline
       - name: Update Feast config for CI
         run: |
-          sed -i 's/redis:6379/localhost:6379/g' src/stress_detection/feature_store/feature_store.yml
+          sed -i 's/redis:6379/localhost:6379/g' src/stress_detection/feature_store/feature_store.yaml
           echo "Updated Feast config:"
           cat feature_store.yml
 
