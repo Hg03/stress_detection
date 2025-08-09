@@ -36,6 +36,8 @@ jobs:
       MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -53,16 +55,21 @@ jobs:
           uv venv .venv
           uv pip install -e ".[dev]" --python .venv/bin/python
 
+      - name: Install Redis CLI and wait for Redis
+        run: |
+          sudo apt-get update && sudo apt-get install -y redis-tools
+          timeout 30s bash -c 'until redis-cli -h localhost -p 6379 ping; do echo "Waiting for Redis..."; sleep 2; done'
+          echo "Redis is ready!"
+
       - name: Run feature pipeline
         run: |
           source .venv/bin/activate
           python src/stress_detection/pipelines/feature_pipeline.py
 
-      # Add below if you want to post a CML report
       - name: Create CML report (optional)
         run: |
           echo "## Feature Pipeline Run" > report.md
-          # Append metrics or summary here, e.g. cat metrics.txt >> report.md
+          echo "Pipeline completed successfully" >> report.md
 
       - name: Publish CML report as PR comment
         if: github.event_name == 'pull_request'
