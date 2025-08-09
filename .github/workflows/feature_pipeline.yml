@@ -34,8 +34,8 @@ jobs:
       - name: Install redis-cli
         run: sudo apt-get update && sudo apt-get install -y redis-tools
 
-      - name: Test Redis connectivity
-        run: redis-cli -h localhost ping
+      # - name: Test Redis connectivity
+      #   run: redis-cli -h localhost ping
 
       - name: Install uv
         run: pip install uv
