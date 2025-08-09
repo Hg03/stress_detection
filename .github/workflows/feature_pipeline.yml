@@ -19,15 +19,26 @@ permissions:
 jobs:
   run-feature-pipeline:
     runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis/redis-stack:latest
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
+      REDIS_URL: redis://localhost:6379
       DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
       DAGSHUB_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
       MLFLOW_EXPERIMENT_NAME: ${{ secrets.MLFLOW_EXPERIMENT_NAME }}
       MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      REDIS_HOST: 127.0.0.1
-      REDIS_PORT: 6379
 
     steps:
       - name: Checkout code
@@ -46,16 +57,18 @@ jobs:
           uv venv .venv
           uv pip install -e ".[dev]" --python .venv/bin/python
 
+      - name: Test Redis connectivity
+        run: |
+          redis-cli -h localhost ping
+
       - name: Run feature pipeline
         run: |
           source .venv/bin/activate
           python src/stress_detection/pipelines/feature_pipeline.py
 
-      # Add below if you want to post a CML report
-      - name: Create CML report (optional)
-        run: |
-          echo "## Feature Pipeline Run" > report.md
-          # Append metrics or summary here, e.g. cat metrics.txt >> report.md
+      # Optional: Create CML report
+      - name: Create CML report
+        run: echo "## Feature Pipeline Run" > report.md
 
       - name: Publish CML report as PR comment
         if: github.event_name == 'pull_request'
@@ -65,5 +78,4 @@ jobs:
         if: github.event_name == 'pull_request'
         env:
           REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cml comment create report.md
+        run: cml comment create report.md
